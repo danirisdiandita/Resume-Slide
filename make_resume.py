@@ -445,6 +445,9 @@ def role_header(c, r):
 def infidea(c):
     r = INFIDEA_ROLE
     role_header(c, r)
+    text(c, W - M, top(208), "~1.5 Billion IDR", SANS_HEAVY, 26, tracking=-3, align="right")
+    unit = "Highest-value project finished"
+    label(c, W - M - text_width(unit.upper(), "Archivo-SemiBold", 8.5, 14), top(226), unit)
     gap_x = 72
     cw = (W - 2 * M - gap_x) / 2
     for i, (icon, body) in enumerate(r["points"]):
