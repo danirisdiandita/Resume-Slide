@@ -132,7 +132,7 @@ WIDYA_ROLE = {
          "Led development of a **RAG based clinical assistant** of Skin Clinic doctors: chatbot "
          "recommendation based on internal documents and stock checking for each clinic"),
         ("ship",
-         "Architected and delivered **real time vehicle counting, classification, License Plate "
+         "**Intelligent Port Monitoring**: Architected and delivered **real time vehicle counting, classification, License Plate "
          "Recognition** system for harbor operations, processing **5,000+** of vehicle "
          "detections per day using YOLO, MobileNetV3, PyTorch/TensorRT, FastAPI, RabbitMQ, and "
          "Docker. (Widya Robotics)"),
@@ -477,7 +477,7 @@ def widya(c):
                                 tracking=-1)
     amp_w = text(c, nx + 22, top(214), "&", SERIF_IT, 28, MUTED)
     draw_img(c, LOGOS / "widya_security.png", nx + 22 + amp_w + 22, top(226), h=36)
-    size, lead = 17, 25
+    size, lead = 15, 22
     lw = 590
     rx = M + lw + 64
     rw = W - M - rx
@@ -496,6 +496,13 @@ def widya(c):
             hline(c, M + 56, M + lw, y + 6, HAIRLINE, 0.75)
             y -= 18
 
+    # Intelligent Port Monitoring screenshot fills the rest of the left column
+    iw, ih = img_size(ROOT / "assets/ipm/cameras.png")
+    sh = lw * ih / iw
+    label(c, M, y - 6, "Intelligent Port Monitoring · live dashboard")
+    ipm_bottom = y - 22 - sh
+    draw_img(c, ROOT / "assets/ipm/cameras.png", M, ipm_bottom, h=sh)
+
     y = top(278)
     label(c, rx, y, "Commercial AI projects")
     n = rich(c, rx, y - 26, r["projects_intro"], size, rw, lead)
@@ -505,8 +512,12 @@ def widya(c):
         n = rich(c, rx + 48, y, body, size, rw - 48, lead)
         y -= n * lead + 14
 
-    bottom_bar(c, BLUE, "From presales to production: AI delivery across Widya Robotics "
-               "& Widya Security.", "Fractional CTO")
+    # matching vehicle-count panels, bottom-aligned with the camera feeds
+    label(c, rx, y - 6, "Vehicle class counts per lane")
+    cw_, ch_ = img_size(ROOT / "assets/ipm/counts.png")
+    h = min(y - 22 - ipm_bottom, rw * ch_ / cw_)
+    draw_img(c, ROOT / "assets/ipm/counts.png", rx, ipm_bottom, h=h)
+
 
 
 def chips(c, x, y, items, width):
