@@ -22,7 +22,7 @@ CONTACTS = [
 
 EDUCATION = [
     {
-        "tag": "01 · MSc · 2017 – 2018",
+        "tag": "01 · MSc · 2017 – 2018 · GPA 3.7",
         "logo": "imperial",
         "school": "Imperial College London",
         "degree": "Master of Science, Physics",
@@ -40,7 +40,7 @@ EDUCATION = [
         ],
     },
     {
-        "tag": "02 · BSc · 2011 – 2015",
+        "tag": "02 · BSc · 2011 – 2015 · GPA 3.66",
         "logo": "ugm",
         "school": "Universitas Gadjah Mada",
         "degree": "Bachelor of Science, Condensed Matter & Materials Physics",
@@ -171,6 +171,50 @@ WICARA_ROLE = {
              "Docker", "Google Cloud Run Service", "Google Cloud Run Job", "Kubernetes"],
 }
 
+SUMMARY = (
+    "Senior Software Engineer and hands-on technology leader with **7+ years** of experience "
+    "building and shipping **production AI and distributed systems**. Deep experience across "
+    "**speech AI**, **RAG/NLP**, **computer vision**, **backend systems**, **Kubernetes**, and "
+    "**cloud infrastructure (AWS/GCP)**, with systems serving **100K+ users**. Combines hands-on "
+    "engineering with **system architecture**, **technical leadership**, and **client-facing "
+    "delivery**, owning complex products from design and model development through production "
+    "deployment and optimization."
+)
+
+INDIE_PROJECTS = [
+    ("notebook", "NoteSpark AI", "notespark.id", "https://notespark.id", "2025 – present",
+     ("1,700+", "registered users"),
+     "Built and launched an **AI study companion** using **LLMs**, **Next.js**, **Go**, and "
+     "**React Native**, reaching **1,700+ registered users** across web, iOS, and Android."),
+    ("page_facing_up", "FastPDF.net", "fastpdf.net", "https://fastpdf.net", "2024",
+     None,
+     "Built a **WASM-based**, **fully client-side** PDF and file-conversion toolkit, keeping "
+     "document processing entirely in the browser."),
+    ("hospital", "Medical SaaS", None, None, "2020 – present",
+     ("2+ years", "in continuous use"),
+     "Built and maintained a **production SaaS platform** used continuously by a **medical "
+     "clinic** for **2+ years**."),
+]
+
+SKILLS = [
+    ("Languages", "Python, Go, TypeScript/JavaScript, C/C++, R"),
+    ("AI/ML", "End-to-end from fine-tuning to production of ML systems including but not limited "
+              "to Computer Vision, RAG, NLP, Generative AI"),
+    ("ML Frameworks", "PyTorch, LangChain, TensorFlow"),
+    ("Backend & APIs", "Go/Gin, Flask, FastAPI, Node.js, NestJS, microservices"),
+    ("Cloud & Infra", "AWS, GCP, Kubernetes, Docker, Cloud Run, AWS Lambda"),
+    ("Frontend & Mobile", "React, React Native, Next.js"),
+    ("Data", "SQL, BigQuery, PostgreSQL, Redis"),
+    ("DevOps", "CI/CD with GitHub Actions, GitLab CI"),
+    ("Leadership", "Technical Leadership, System Architecture, Technical Presales, Mentoring, "
+                   "Hiring, Cross-Functional collaboration"),
+]
+
+CERTIFICATIONS = [
+    ("locked", "Certified Appsec Practitioner V2 (CAP)", "May 2026"),
+    ("clipboard", "ISO/IEC 27001:2022 Lead Implementer", "April 2025"),
+]
+
 DIM = HexColor("#8A8A8A")
 RULE_DARK = HexColor("#2A2A2A")
 
@@ -209,8 +253,16 @@ def intro(c):
 def education(c):
     kicker(c, "Education · Where I trained")
     text(c, W - M, top(52), "NORMA DANI RISDIANDITA", "Serif", 13, INK, tracking=12, align="right")
-    headline(c, M, top(165), [("sans", "Physics first,"), ("emoji", "atom_symbol"),
-                              ("serif", "code ever since.")], 68)
+    text(c, M, top(140), "Education", SANS_HEAVY, 60, tracking=-4)
+    text(c, M, top(188), "Background in Theoretical Physics with Scientific Computing",
+         SERIF_IT, 28, MUTED)
+    skills = ["Maths", "Physics", "Computing (Python, Fortran)"]
+    widths = [text_width(t, "Archivo-Medium", 13) + 18 for t in skills]
+    sx = W - M - sum(widths) - 6 * (len(skills) - 1)
+    label(c, sx, top(150), "Skills")
+    for t, w in zip(skills, widths):
+        chip(c, sx, top(176), t, w)
+        sx += w + 6
     hline(c, M, W - M, top(212))
 
     gap = 72
@@ -317,21 +369,26 @@ def data_science(c):
                "Data in, decisions out.")
 
 
-def role_header(c, r):
-    """Kicker, role title + companies on the left, big date range on the right."""
-    kicker(c, f"Experience · {r['dates']}")
+def header(c, kick, title, sub=None, right=None, logo=None):
+    """Kicker, big title + italic subtitle (or logo) on the left, optional big text on the right."""
+    kicker(c, kick)
     text(c, W - M, top(52), "NORMA DANI RISDIANDITA", "Serif", 13, INK, tracking=12, align="right")
-    date_w = text(c, W - M, top(160), r["dates"], SANS_HEAVY, 36, tracking=-3, align="right")
+    right_w = text(c, W - M, top(160), right, SANS_HEAVY, 36, tracking=-3, align="right") if right else 0
     size = 60
-    while text_width(r["title"], SANS_HEAVY, size, -4) > W - 2 * M - date_w - 48:
+    while text_width(title, SANS_HEAVY, size, -4) > W - 2 * M - right_w - 48:
         size -= 2
-    text(c, M, top(160), r["title"], SANS_HEAVY, size, tracking=-4)
-    if r.get("logo"):
-        c.drawImage(str(LOGOS / r["logo"]), M, top(222), 300, 36, mask="auto",
+    text(c, M, top(160), title, SANS_HEAVY, size, tracking=-4)
+    if logo:
+        c.drawImage(str(LOGOS / logo), M, top(222), 300, 36, mask="auto",
                     preserveAspectRatio=True, anchor="sw")
-    else:
-        text(c, M, top(205), f"at {r['companies']}", SERIF_IT, 30, MUTED)
+    elif sub:
+        text(c, M, top(205), sub, SERIF_IT, 30, MUTED)
     hline(c, M, W - M, top(240))
+
+
+def role_header(c, r):
+    header(c, f"Experience · {r['dates']}", r["title"], f"at {r['companies']}", r["dates"],
+           r.get("logo"))
 
 
 def infidea(c):
@@ -437,16 +494,99 @@ def wicara(c):
                "Widya Wicara")
 
 
-PAGES = [("001-intro.pdf", intro), ("002-education.pdf", education),
-         ("003-data-science.pdf", data_science), ("004-infidea.pdf", infidea),
-         ("005-widya.pdf", widya), ("006-widya-wicara.pdf", wicara)]
+def summary(c):
+    header(c, "Intro · Summary", "Summary", "Senior Software Engineer - Full-Stack & AI/ML")
+    headline(c, M, top(296), [("sans", "0-1 Startup Founding Engineer "),
+                              ("serif", "and 1 to 100K Maintainer.")], 27)
+    headline(c, M, top(334), [("sans", "Client-facing, "),
+                              ("serif", "experienced with multiple production AI projects/products.")], 27)
+    rich(c, M, top(390), SUMMARY, 21, 860, 31)
+
+    sx = M + 860 + 72
+    for i, (num, lab) in enumerate([("7+", "years of experience"), ("100K+", "users served")]):
+        y = top(320 + i * 150)
+        text(c, sx, y, num, SANS_HEAVY, 72, tracking=-4)
+        label(c, sx, y - 30, lab)
+        if i == 0:
+            hline(c, sx, W - M, y - 62, HAIRLINE, 0.75)
+
+    bottom_bar(c, MUSTARD, "Speech AI · RAG/NLP · Computer Vision · Backend · Kubernetes · AWS/GCP",
+               "Senior Software Engineer")
+
+
+def indie_projects(c):
+    header(c, "Indie developer projects", "Indie Developer Projects", None, "2020 – present")
+    gap = 48
+    cw = (W - 2 * M - gap * 2) / 3
+    for i, (icon, name, url_text, url, years, stat, body) in enumerate(INDIE_PROJECTS):
+        x = M + i * (cw + gap)
+        label(c, x, top(285), f"0{i + 1} · {years}")
+        emoji(c, icon, x, top(375), 72)
+        if stat:
+            text(c, x + 96, top(345), stat[0], SANS_HEAVY, 40, tracking=-4)
+            label(c, x + 98, top(368), stat[1])
+        text(c, x, top(418), name, "Archivo-Bold", 28, tracking=-2)
+        if url_text:
+            w = text(c, x, top(444), url_text, SERIF_IT, 19, MUTED)
+            c.linkURL(url, (x, top(450), x + w, top(428)), relative=0)
+        hline(c, x, x + cw, top(464), HAIRLINE, 0.75)
+        rich(c, x, top(498), body, 18, cw, 26)
+
+    bottom_bar(c, RED, "NoteSpark AI · FastPDF.net · Medical SaaS", "Indie developer")
+
+
+def technical_skills(c):
+    header(c, "Technical skills", "Technical Skills")
+    y = top(290)
+    for i, (cat, items) in enumerate(SKILLS):
+        label(c, M, y, cat)
+        n = rich(c, M + 240, y, items, 21, W - 2 * M - 240, 28)
+        y -= n * 28 + 22
+        if i < len(SKILLS) - 1:
+            hline(c, M, W - M, y + 28, HAIRLINE, 0.75)
+
+
+def certifications(c):
+    header(c, "Certifications", "Certifications")
+    gap = 72
+    cw = (W - 2 * M - gap) / 2
+    for i, (icon, name, date) in enumerate(CERTIFICATIONS):
+        x = M + i * (cw + gap)
+        label(c, x, top(290), f"0{i + 1}")
+        emoji(c, icon, x, top(420), 104)
+        for k, ln in enumerate(wrap(name, "Archivo-Bold", 36, cw)):
+            text(c, x, top(480 + k * 42), ln, "Archivo-Bold", 36, tracking=-2)
+        text(c, x, top(580), date, SERIF_IT, 24, MUTED)
+
+    bottom_bar(c, GREEN, "norma.risdiandita@gmail.com  ·  +62 813-2861-7302", "danirisdiandita.com")
+
+
+PAGES = [
+    ("001-intro.pdf", intro),
+    ("002-summary.pdf", summary),
+    ("003-education.pdf", education),
+    ("004-data-science.pdf", data_science),
+    ("005-infidea.pdf", infidea),
+    ("006-widya.pdf", widya),
+    ("007-widya-wicara.pdf", wicara),
+    ("008-indie-projects.pdf", indie_projects),
+    ("009-technical-skills.pdf", technical_skills),
+    ("010-certifications.pdf", certifications),
+]
+FULL_DECK = "resume-full.pdf"
 
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
+    full = canvas.Canvas(str(OUT / FULL_DECK), pagesize=(W, H))
+    full.setTitle(f"{NAME} — {ROLE}")
     for filename, draw in PAGES:
         c = canvas.Canvas(str(OUT / filename), pagesize=(W, H))
         c.setTitle(f"{NAME} — {ROLE}")
         draw(c)
         c.showPage()
         c.save()
+        draw(full)
+        full.showPage()
         print(f"wrote resume/{filename}")
+    full.save()
+    print(f"wrote resume/{FULL_DECK}")
