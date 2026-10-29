@@ -1,5 +1,6 @@
 """Generate the real resume slides into resume/, following DESIGNS.md."""
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from make_sample import (BLUE, GREEN, HAIRLINE, INK, M, MUSTARD, MUTED, PAPER, RED, ROOT, SANS_HEAVY, SERIF_IT,
@@ -85,6 +86,11 @@ INFIDEA_ROLE = {
     "title": "Senior Software Engineer / Co-Founder",
     "companies": "Infidea.id",
     "logo": "infidea.png",
+    "stack": [
+        ("Software Engineering", ["Python", "JavaScript", "C/C++"]),
+        ("AI and ML", ["PyTorch", "TensorFlow", "Computer Vision", "NLP"]),
+        ("Infra", ["Docker", "Kubernetes", "CI/CD"]),
+    ],
     "dates": "Dec 2020 – April 2022",
     "points": [
         ("handshake",
@@ -110,12 +116,12 @@ WIDYA_ROLE = {
     "companies": "Widya Robotics & Widya Security",
     "dates": "Jan 2025 – June 2026",
     "left": [
-        ("robot", "Widya Robotics",
+        ("logo:widya_robotics_icon.png", "Widya Robotics",
          "Led **technical presales** and **end-to-end delivery** for AI projects across Widya "
          "Robotics, serving as the **go-to technical owner** from client discovery and solution "
          "architecture through implementation and production deployment; helped close and "
          "deliver multiple commercial AI projects."),
-        ("shield", "Widya Security",
+        ("logo:widya_security_shield.png", "Widya Security",
          "Led **cybersecurity initiatives** at Widya Security, including developing "
          "**LLM-powered VAPT reporting platform** that accelerated penetration-testing report "
          "generation."),
@@ -139,12 +145,13 @@ WIDYA_ROLE = {
 WICARA_ROLE = {
     "title": "Senior Software Engineer / Founding Engineer / CTO",
     "companies": "Widya Wicara",
+    "logo": "widya_wicara.png",
     "dates": "May 2022 – Present",
     "products_label": "Transkripsi.id & Widya Notulensi",
     "products": "Architected, built and launched **Transkripsi.id** and **Widya Notulensi** "
                 "(https://notulensi.id), two production **AI & LLM powered transcription "
                 "products**",
-    "stats": [("100K+", "users"), ("99.9%", "uptime"), ("> 1000", "AI workloads per month")],
+    "stats": [("100K+", "users, both products"), ("99.9%", "uptime"), ("> 1000", "AI workloads per month")],
     "sub": [
         "Built production **speech-to-text**, **meeting transcription**, and **multi-participant "
         "speaker diarization** system with data **encrypted in transit and at rest**, and "
@@ -182,18 +189,31 @@ SUMMARY = (
 )
 
 INDIE_PROJECTS = [
-    ("notebook", "NoteSpark AI", "notespark.id", "https://notespark.id", "2025 – present",
-     ("1,700+", "registered users"),
-     "Built and launched an **AI study companion** using **LLMs**, **Next.js**, **Go**, and "
-     "**React Native**, reaching **1,700+ registered users** across web, iOS, and Android."),
-    ("page_facing_up", "FastPDF.net", "fastpdf.net", "https://fastpdf.net", "2024",
-     None,
-     "Built a **WASM-based**, **fully client-side** PDF and file-conversion toolkit, keeping "
-     "document processing entirely in the browser."),
-    ("hospital", "Medical SaaS", None, None, "2020 – present",
-     ("2+ years", "in continuous use"),
-     "Built and maintained a **production SaaS platform** used continuously by a **medical "
-     "clinic** for **2+ years**."),
+    {
+        "icon": "img:notespark/icon.png",
+        "name": "NoteSpark AI",
+        "url_text": "notespark.id",
+        "url": "https://notespark.id",
+        "years": "2025 – present",
+        "stat": ("1,900+", "registered users"),
+        "body": "Built and launched an **AI study companion** using **LLMs**, **Next.js**, **Go**, "
+                "and **React Native**, reaching **1,900+ registered users** across web, iOS, and "
+                "Android. Subscribers **mostly from the US**. {flag:us}",
+        "screens": [f"notespark/screen{i}.png" for i in range(1, 6)],
+        "weight": 0.64,
+    },
+    {
+        "icon": "hospital",
+        "name": "Medical SaaS",
+        "url_text": None,
+        "url": None,
+        "years": "2020 – present",
+        "stat": ("2+ years", "in continuous use"),
+        "body": "Built and maintained a **production SaaS platform** used continuously by a "
+                "**medical clinic** for **2+ years**.",
+        "screens": [],
+        "weight": 0.36,
+    },
 ]
 
 SKILLS = [
@@ -292,11 +312,39 @@ def education(c):
                "London · Yogyakarta")
 
 
+def us_flag(c, x, y, h):
+    """Small vector US flag, bottom-left at (x, y)."""
+    w = h * 1.9
+    stripe = h / 13
+    c.saveState()
+    for i in range(13):
+        c.setFillColor(HexColor("#B22234") if i % 2 == 0 else PAPER)
+        c.rect(x, y + h - (i + 1) * stripe, w, stripe, fill=1, stroke=0)
+    cw, ch = w * 0.4, stripe * 7
+    c.setFillColor(HexColor("#3C3B6E"))
+    c.rect(x, y + h - ch, cw, ch, fill=1, stroke=0)
+    c.setFillColor(PAPER)
+    for r in range(4):
+        for k in range(5):
+            c.circle(x + cw * (k + 0.5) / 5, y + h - ch * (r + 0.5) / 4, h * 0.03, fill=1, stroke=0)
+    c.setStrokeColor(HAIRLINE)
+    c.setLineWidth(0.5)
+    c.rect(x, y, w, h, fill=0, stroke=1)
+    c.restoreState()
+    return w
+
+
+INLINE = {"{flag:us}": us_flag}  # tokens drawn as graphics inside rich text
+
+
 def rich(c, x, y, s, size, width, leading):
     """Draw wrapped text where **phrases** are set in Archivo Bold."""
     font = {False: "Archivo-Regular", True: "Archivo-Bold"}
     words, bold = [], False  # each word: list of (piece, bold) runs
     for token in s.split():
+        if token in INLINE:
+            words.append([(token, None, size * 0.72 * 1.9)])
+            continue
         runs = []
         for n, piece in enumerate(token.split("**")):
             if n:
@@ -319,7 +367,10 @@ def rich(c, x, y, s, size, width, leading):
         cx = x
         for runs in ln:
             for piece, b, w in runs:
-                text(c, cx, y - k * leading, piece, font[b], size)
+                if b is None:
+                    INLINE[piece](c, cx, y - k * leading - size * 0.02, size * 0.72)
+                else:
+                    text(c, cx, y - k * leading, piece, font[b], size)
                 cx += w
             cx += space
     return len(lines)
@@ -404,6 +455,11 @@ def infidea(c):
         rich(c, x + 72, y - 32, body, 18, cw - 72, 26)
         if i < 2:
             hline(c, x, x + cw, y - 150, HAIRLINE, 0.75)
+    sw = (W - 2 * M - 36 * (len(r["stack"]) - 1)) / len(r["stack"])
+    for i, (lab, items) in enumerate(r["stack"]):
+        x = M + i * (sw + 36)
+        label(c, x, top(590), lab)
+        chips(c, x, top(616), items, sw)
 
     bottom_bar(c, BLUE, "Client-facing tech lead, end-to-end ML lifecycle, production AI systems.",
                "Co-Founder, Infidea.id")
@@ -411,7 +467,13 @@ def infidea(c):
 
 def widya(c):
     r = WIDYA_ROLE
-    role_header(c, r)
+    header(c, f"Experience · {r['dates']}", r["title"], None, r["dates"])
+    # company lockups in place of the subtitle
+    icon_w, _ = draw_img(c, LOGOS / "widya_robotics_icon.png", M, top(226), h=38)
+    nx = M + icon_w + 12 + text(c, M + icon_w + 12, top(214), "Widya Robotics", "Archivo-Bold", 24,
+                                tracking=-1)
+    amp_w = text(c, nx + 22, top(214), "&", SERIF_IT, 28, MUTED)
+    draw_img(c, LOGOS / "widya_security.png", nx + 22 + amp_w + 22, top(226), h=36)
     size, lead = 17, 25
     lw = 590
     rx = M + lw + 64
@@ -419,7 +481,11 @@ def widya(c):
 
     y = top(278)
     for i, (icon, lab, body) in enumerate(r["left"]):
-        emoji(c, icon, M, y - 44, 40)
+        if icon.startswith("logo:"):
+            c.drawImage(str(LOGOS / icon[5:]), M, y - 44, 40, 40, mask="auto",
+                        preserveAspectRatio=True)
+        else:
+            emoji(c, icon, M, y - 44, 40)
         label(c, M + 56, y, lab)
         n = rich(c, M + 56, y - 26, body, size, lw - 56, lead)
         y -= 26 + n * lead + 18
@@ -462,7 +528,7 @@ def wicara(c):
 
     # left: flagship products
     y = top(272)
-    emoji(c, "studio_microphone", M, y - 44, 40)
+    c.drawImage(str(ROOT / "assets/notulensi/icon.png"), M, y - 44, 40, 40, mask="auto")
     label(c, M + 56, y, r["products_label"])
     n = rich(c, M + 56, y - 24, r["products"], size, lw - 56, lead)
     y -= 24 + n * lead + 12
@@ -516,23 +582,41 @@ def summary(c):
 
 def indie_projects(c):
     header(c, "Indie developer projects", "Indie Developer Projects", None, "2020 – present")
-    gap = 48
-    cw = (W - 2 * M - gap * 2) / 3
-    for i, (icon, name, url_text, url, years, stat, body) in enumerate(INDIE_PROJECTS):
-        x = M + i * (cw + gap)
-        label(c, x, top(285), f"0{i + 1} · {years}")
-        emoji(c, icon, x, top(375), 72)
-        if stat:
-            text(c, x + 96, top(345), stat[0], SANS_HEAVY, 40, tracking=-4)
-            label(c, x + 98, top(368), stat[1])
-        text(c, x, top(418), name, "Archivo-Bold", 28, tracking=-2)
-        if url_text:
-            w = text(c, x, top(444), url_text, SERIF_IT, 19, MUTED)
-            c.linkURL(url, (x, top(450), x + w, top(428)), relative=0)
-        hline(c, x, x + cw, top(464), HAIRLINE, 0.75)
-        rich(c, x, top(498), body, 18, cw, 26)
+    gap = 72
+    x = M
+    for i, p in enumerate(INDIE_PROJECTS):
+        cw = (W - 2 * M - gap * (len(INDIE_PROJECTS) - 1)) * p["weight"]
+        label(c, x, top(285), f"0{i + 1} · {p['years']}")
+        if p["icon"].startswith("img:"):
+            c.drawImage(str(ROOT / "assets" / p["icon"][4:]), x, top(375), 72, 72, mask="auto")
+        else:
+            emoji(c, p["icon"], x, top(375), 72)
+        text(c, x + 90, top(336), p["name"], "Archivo-Bold", 28, tracking=-2)
+        if p["url_text"]:
+            w = text(c, x + 90, top(362), p["url_text"], SERIF_IT, 19, MUTED)
+            c.linkURL(p["url"], (x + 90, top(368), x + 90 + w, top(346)), relative=0)
+        num, unit = p["stat"]
+        text(c, x + cw, top(342), num, SANS_HEAVY, 36, tracking=-4, align="right")
+        unit_w = text_width(unit.upper(), "Archivo-SemiBold", 8.5, 14)
+        label(c, x + cw - unit_w, top(364), unit)
+        hline(c, x, x + cw, top(396), HAIRLINE, 0.75)
+        n = rich(c, x, top(428), p["body"], 18, cw, 26)
 
-    bottom_bar(c, RED, "NoteSpark AI · FastPDF.net · Medical SaaS", "Indie developer")
+        if p["screens"]:
+            sgap = 12
+            sw = (cw - sgap * (len(p["screens"]) - 1)) / len(p["screens"])
+            sh = sw * 311 / 293
+            sy = top(428) - n * 26 - 12 - sh
+            if sy < top(656):  # keep clear of the bottom bar
+                sh -= top(656) - sy
+                sw = sh * 293 / 311
+                sy = top(656)
+            for k, img in enumerate(p["screens"]):
+                c.drawImage(str(ROOT / "assets" / img), x + k * (sw + sgap), sy, sw, sh,
+                            mask="auto")
+        x += cw + gap
+
+    bottom_bar(c, RED, "NoteSpark AI · Medical SaaS", "Indie developer")
 
 
 def technical_skills(c):
@@ -561,6 +645,63 @@ def certifications(c):
     bottom_bar(c, GREEN, "norma.risdiandita@gmail.com  ·  +62 813-2861-7302", "danirisdiandita.com")
 
 
+def img_size(path):
+    return ImageReader(str(path)).getSize()
+
+
+def draw_img(c, path, x, y, h=None, w=None):
+    """Draw an image at (x, y) bottom-left, sized by height or width. Returns (w, h)."""
+    iw, ih = img_size(path)
+    if h is None:
+        h = w * ih / iw
+    else:
+        w = h * iw / ih
+    c.drawImage(str(path), x, y, w, h, mask="auto")
+    return w, h
+
+
+def products(c):
+    header(c, "Widya Wicara · Products", "Transkripsi.id & Widya Notulensi",
+           "Two AI transcription products", "100K+ users")
+    unit = "combined"
+    uw = text_width(unit.upper(), "Archivo-SemiBold", 8.5, 14)
+    label(c, W - M - uw, top(184), unit)
+
+    assets = ROOT / "assets"
+    gap = 56
+    cw = (W - 2 * M - gap) / 2
+
+    # left: Transkripsi.id
+    x = M
+    label(c, x, top(270), "01 · Upload & transcribe")
+    lw, _ = draw_img(c, assets / "transkripsi/logo.png", x, top(312), h=32)
+    w = text(c, x + lw + 16, top(304), "transkripsi.id", SERIF_IT, 19, MUTED)
+    c.linkURL("https://transkripsi.id", (x + lw + 16, top(310), x + lw + 16 + w, top(288)), relative=0)
+    hh = 300
+    hw, _ = draw_img(c, assets / "transkripsi/hero.png", x, top(330) - hh, h=hh)
+    rw = cw - hw - 12
+    draw_img(c, assets / "transkripsi/result.png", x + hw + 12, top(330) - hh, w=rw)
+
+    # right: Widya Notulensi
+    x = M + cw + gap
+    label(c, x, top(270), "02 · Meeting bots")
+    lw, _ = draw_img(c, assets / "notulensi/logo.png", x, top(312), h=32)
+    w = text(c, x + lw + 16, top(304), "notulensi.id", SERIF_IT, 19, MUTED)
+    c.linkURL("https://notulensi.id", (x + lw + 16, top(310), x + lw + 16 + w, top(288)), relative=0)
+    iw, ih = img_size(assets / "notulensi/dashboard.png")
+    dh = cw * ih / iw
+    draw_img(c, assets / "notulensi/dashboard.png", x, top(330) - dh, w=cw)
+    y = top(330) - dh - 34
+    label(c, x, y, "Joins meetings on")
+    bx = x
+    for img, h in [("zoom_wide.png", 28), ("meet_wide.png", 25), ("teams_wide.png", 30)]:
+        w, _ = draw_img(c, assets / "notulensi" / img, bx, y - 16 - h, h=h)
+        bx += w + 32
+
+    bottom_bar(c, BLUE, "Transkripsi.id + Widya Notulensi: 100K+ users combined, 99.9% uptime.",
+               "Founding engineer / CTO")
+
+
 PAGES = [
     ("001-intro.pdf", intro),
     ("002-summary.pdf", summary),
@@ -569,9 +710,10 @@ PAGES = [
     ("005-infidea.pdf", infidea),
     ("006-widya.pdf", widya),
     ("007-widya-wicara.pdf", wicara),
-    ("008-indie-projects.pdf", indie_projects),
-    ("009-technical-skills.pdf", technical_skills),
-    ("010-certifications.pdf", certifications),
+    ("008-products.pdf", products),
+    ("009-indie-projects.pdf", indie_projects),
+    ("010-technical-skills.pdf", technical_skills),
+    ("011-certifications.pdf", certifications),
 ]
 FULL_DECK = "resume-full.pdf"
 
